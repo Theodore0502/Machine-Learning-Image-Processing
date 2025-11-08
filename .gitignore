@@ -1,0 +1,24 @@
+# Bỏ qua thư mục ảo và cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Bỏ file log, checkpoint, dữ liệu huấn luyện nặng
+runs/
+weights/
+outputs/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Bỏ thư mục data (nếu quá nặng, có thể push riêng sau)
+data/
+datasets/
+
+# Bỏ file tạm, notebook cache, IDE
+.DS_Store
+*.ipynb_checkpoints
+.idea/
+.vscode/

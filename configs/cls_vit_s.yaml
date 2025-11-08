@@ -1,0 +1,34 @@
+model: vit_small_patch16_224   
+img_size: 224
+batch_size: 4                 
+accumulation_steps: 8           # tăng để giữ effective batch (4*8=32)
+epochs: 20
+
+optimizer: adamw
+lr: 3e-4
+weight_decay: 0.05
+label_smoothing: 0.1
+
+augment:
+  mixup: 0.0
+  cutmix: 0.0
+  color: true
+  random_erasing: 0.1
+
+dataloader:
+  num_workers: 0                # QUAN TRỌNG: không spawn worker -> đỡ tốn page file
+  pin_memory: false             # tắt để giảm áp lực bộ nhớ hệ thống
+  prefetch_factor: 2            # sẽ bị bỏ qua khi num_workers=0
+  persistent_workers: false
+
+amp: true
+tf32: true
+cudnn_benchmark: true
+
+data_root: .
+train_split: data/splits/train_cls.txt
+val_split:   data/splits/val_cls.txt
+
+save_dir: runs/cls_vit_s_224
+early_stop:
+  patience: 5
