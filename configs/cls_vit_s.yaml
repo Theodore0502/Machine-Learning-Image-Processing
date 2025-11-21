@@ -4,6 +4,8 @@ batch_size: 4
 accumulation_steps: 8           # tăng để giữ effective batch (4*8=32)
 epochs: 20
 
+num_classes: 5
+
 optimizer: adamw
 lr: 3e-4
 weight_decay: 0.05
