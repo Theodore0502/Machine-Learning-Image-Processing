@@ -44,13 +44,14 @@ data/
 
 python -c "import torch; print(torch.__version__)"
 
-python -m src.tools.infer_one ^
-  --ckpt runs\cls_vit_s_224\weights\vit_small_patch16_224_best.pt ^
-  --model_name vit_small_patch16_224 ^
-  --labels_file data\splits\labels.txt ^
-  --img test1.jpg ^
-  --img_size 224 ^
+python -m src.tools.infer_one `
+  --ckpt runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt `
+  --model_name vit_small_patch16_224 `
+  --img temp/test1.jpg `
+  --labels_file data/splits/labels.txt `
+  --img_size 224 `
   --topk 4
+
 
 ## KPIs
 - A: F1 macro ≥ 0.80 (field-based split), CPU latency < 80ms/image (ONNXRuntime)
@@ -63,3 +64,5 @@ python -m src.tools.infer_one ^
 - Grad-CAM: `python -m src.tools.gradcam --ckpt <best.pt> --model_name <cnn_small|resnet18|vit_small_patch16_224> --img <img> --img_size 224 --out out.png`
 - Evaluation script: `src/tools/eval_cls.py` → classification report + confusion matrix + CSV.
 - Traditional ML baseline (HSV hist + GLCM) + SVM: `src/tools/feats_svm.py`.
+
+localhost:7860
