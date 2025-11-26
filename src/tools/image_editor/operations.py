@@ -14,10 +14,12 @@ def adjust_brightness_contrast(
         - 0   -> đen hoàn toàn
         - 50  -> giữ sáng gốc
         - 100 -> sáng nhất (có thể cháy sáng ở vùng sáng)
+
     contrast: ~ [0.5, 1.5]
         - <1  -> giảm tương phản
         - >1  -> tăng tương phản
     """
+    
     img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR).astype(np.float32) / 255.0
 
     # 0 -> 0.0, 50 -> 1.0, 100 -> 2.0
@@ -45,6 +47,7 @@ def adjust_hsv(
     sat_scale: 0.0..3.0  (0 = mất màu, >1 = rất rực)
     val_scale: 0.0..3.0  (0 = đen, >1 = sáng hơn)
     """
+    
     img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2HSV).astype(np.float32)
     h, s, v = cv2.split(img_cv)
 
