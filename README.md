@@ -1,6 +1,6 @@
 # rice-leaf-health
 
-updated: 21/11/2025
+updated: 01/12/2025
 
 Two-week, single-codebase project for rice leaf disease recognition:
 - A (Course 1): Classification (ViT/ConvNeXt), Grad-CAM/SAM-based explanation, ONNX export.
