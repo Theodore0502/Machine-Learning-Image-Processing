@@ -1,5 +1,5 @@
 # src/tools/image_editor/operations.py
-from PIL import Image
+from PIL import Image #python image library
 import numpy as np
 import cv2
 
