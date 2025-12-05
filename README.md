@@ -36,6 +36,24 @@ python -m src.tools.infer_one `
   --img_size 224 `
   --topk 4
 
+python -m src.tools.eval_cls '
+  --ckpt runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt '
+  --model_name vit_small_patch16_224 '
+  --split_file data/splits/test_cls.txt '
+  --labels_file data/splits/labels.txt '
+  --img_size 224 '
+
+
+python -m src.tools.eval_cls \
+  --ckpt runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt \
+  --model_name vit_small_patch16_224 \
+  --split_file data/splits/test_cls.txt \
+  --labels_file data/splits/labels.txt \
+  --img_size 224
+
+python -m src.tools.eval_cls --ckpt runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt --model_name vit_small_patch16_224 --split_file data/splits/test_cls.txt --labels_file data/splits/labels.txt --img_size 224
+
+
 
 ## KPIs
 - A: F1 macro ≥ 0.80 (field-based split), CPU latency < 80ms/image (ONNXRuntime)

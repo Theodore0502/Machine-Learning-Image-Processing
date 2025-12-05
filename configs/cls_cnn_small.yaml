@@ -1,0 +1,43 @@
+# Config for CNN baseline training
+data_root: "data"
+train_split: "data/splits/train_cls.txt"
+val_split: "data/splits/val_cls.txt"
+test_split: "data/splits/test_cls.txt"
+
+model: "cnn_small"  # ← Thay vì vit_small_patch16_224
+img_size: 224
+num_classes: 5
+
+# Training
+epochs: 30
+batch_size: 32  # CNN nhẹ hơn → batch_size lớn hơn
+lr: 0.001
+weight_decay: 0.0001
+label_smoothing: 0.1
+
+# Optimization
+amp: true
+tf32: true
+cudnn_benchmark: true
+accumulation_steps: 2
+seed: 1337
+
+# Augmentation
+augment:
+  color: true
+  random_erasing: 0.25
+  mixup: 0.2
+  cutmix: 0.2
+
+# DataLoader
+dataloader:
+  num_workers: 8
+  pin_memory: true
+  prefetch_factor: 2
+  persistent_workers: true
+
+# Early stopping
+early_stop:
+  patience: 5
+
+save_dir: "runs/cls_cnn_small"
