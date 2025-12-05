@@ -1,0 +1,7 @@
+Class,Train,Val,Test,Total
+bacterial_blight,1108,237,239,1584
+blast,1007,216,217,1440
+brown_spot,1120,240,240,1600
+healthy,366,78,79,523
+tungro,915,196,197,1308
+TOTAL,4516,967,972,6455
