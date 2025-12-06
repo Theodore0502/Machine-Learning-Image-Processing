@@ -1,0 +1,78 @@
+═══════════════════════════════════════════════════════════════════
+3 ĐIỂM NHỎ CẦN SỬA TRONG BÁO CÁO
+═══════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────
+1. MỤC 2.2 - SỬA TÊN FILE
+───────────────────────────────────────────────────────────────────
+
+Tìm dòng:
+  "File infer.py: Cho phép suy luận một ảnh đơn"
+
+Sửa thành:
+  "File infer_one.py: Cho phép suy luận một ảnh đơn"
+
+
+───────────────────────────────────────────────────────────────────
+2. MỤC 2.6 - THÊM CHI TIẾT 2 BUTTONS (cuối mục)
+───────────────────────────────────────────────────────────────────
+
+Thêm vào CUỐI mục 2.6 (sau phần "Load mô hình khi khởi động"):
+
+Quy trình khi người dùng click button:
+
+Khi click "Predict with CNN":
+  • Hệ thống sử dụng model CNN 
+    (runs/cls_cnn_small/weights/cnn_small_best.pt)
+  • Hiển thị kết quả với emoji 🔷
+  • Thể hiện metrics CNN (Accuracy 87.3%, F1 85.7%)
+  • Thời gian suy luận ~15-20ms
+
+Khi click "Predict with ViT":
+  • Hệ thống sử dụng model ViT 
+    (runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt)
+  • Hiển thị kết quả với emoji 🟢
+  • Thể hiện metrics ViT (Accuracy 89.2%, F1 87.6%)
+  • Thời gian suy luận ~50-100ms
+
+Thiết kế này cho phép:
+  • Người dùng so sánh trực tiếp cả 2 models trên cùng 1 ảnh
+  • Giảng viên kiểm tra cả 2 models trong 1 session demo
+  • Thể hiện rõ trade-off giữa tốc độ (CNN) và độ chính xác (ViT)
+
+
+───────────────────────────────────────────────────────────────────
+3. MỤC 3.6 - SỬA MÔ TẢ BUTTONS
+───────────────────────────────────────────────────────────────────
+
+Tìm đoạn:
+  • Bấm "Edit & Predict":
+    o Nhận được:
+    o Tên bệnh dự đoán.
+    o Độ tin cậy phần trăm.
+
+Sửa thành:
+  • Chọn mô hình dự đoán:
+    o Bấm "Predict with CNN" để dự đoán nhanh
+    o Bấm "Predict with ViT" để dự đoán chính xác cao
+  
+  • Nhận được:
+    o Model đã sử dụng (CNN/ViT) với emoji phân biệt
+    o Metrics của model
+    o Tên bệnh dự đoán
+    o Độ tin cậy phần trăm
+    o Top-5 phân bố xác suất
+    o Thời gian suy luận
+
+
+═══════════════════════════════════════════════════════════════════
+TỔNG KẾT
+═══════════════════════════════════════════════════════════════════
+
+✅ Chương 1: Hoàn hảo - không cần sửa gì
+✅ Chương 2: Rất tốt - chỉ sửa 2 điểm nhỏ (tên file + chi tiết 2 buttons)
+✅ Chương 3: Tốt - sửa 1 điểm nhỏ (mô tả buttons)
+
+Sau khi sửa 3 điểm này, báo cáo sẽ đạt 10/10!
+
+═══════════════════════════════════════════════════════════════════

@@ -1,0 +1,497 @@
+═══════════════════════════════════════════════════════════════════════════
+DANH SÁCH SỬA ĐỔI BÁO CÁO DỰ ÁN
+═══════════════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────────────
+1. CẤU TRÚC THƯ MỤC DỰ ÁN (Mục 2.2)
+───────────────────────────────────────────────────────────────────────────
+
+SỬA TOÀN BỘ CẤU TRÚC THÀNH:
+
+rice_leaf_health_2/
+│
+├── data/
+│   ├── rice_cls/                    
+│   │   ├── bacterial_blight/
+│   │   ├── blast/
+│   │   ├── brown_spot/
+│   │   ├── healthy/
+│   │   └── tungro/
+│   └── splits/                      
+│       ├── train_cls.txt
+│       ├── val_cls.txt
+│       ├── test_cls.txt
+│       └── labels.txt
+│
+├── src/
+│   ├── data/                        
+│   │   ├── datasets_cls.py          
+│   │   └── datasets_seg.py
+│   │
+│   ├── models/
+│   │   ├── cnn_small.py             
+│   │   └── vit_small.py             
+│   │
+│   ├── tools/
+│   │   ├── predict.py               
+│   │   ├── compare_models.py        
+│   │   ├── infer_one.py
+│   │   ├── eval_cls.py
+│   │   ├── gradcam.py
+│   │   └── web/
+│   │       └── app_gradio.py
+│   │
+│   ├── visualization/               
+│   │   ├── model_comparison.py      
+│   │   ├── dataset_stats.py
+│   │   └── pipeline_viz.py
+│   │
+│   ├── core/                        
+│   │   ├── engine.py
+│   │   ├── validation.py
+│   │   └── color_normalization.py
+│   │
+│   └── train.py
+│
+├── configs/
+│   ├── cls_cnn_small.yaml           
+│   ├── cls_vit_s.yaml               
+│   └── seg_segformer_b0.yaml
+│
+├── runs/
+│   ├── cls_cnn_small/               
+│   │   └── weights/
+│   │       └── cnn_small_best.pt
+│   └── cls_vit_s_224/
+│       └── weights/
+│           └── vit_small_patch16_224_best.pt
+│
+├── outputs/                         
+│   └── cnn_vs_vit_comparison.png
+│
+├── docs/                            
+│   ├── VISUALIZATION_GUIDE.md
+│   └── GRADIO_MODEL_SWITCHING.md
+│
+├── requirements.txt
+├── requirements-minimal.txt         
+└── README.md
+
+
+───────────────────────────────────────────────────────────────────────────
+2. SỬA TÊN FILE VÀ MODULE (Tất cả các mục liên quan)
+───────────────────────────────────────────────────────────────────────────
+
+• Tìm và thay thế:
+  - "src/datasets/rice_dataset.py" → "src/data/datasets_cls.py"
+  - "src/models/small_cnn.py" → "src/models/cnn_small.py"
+  - "src/models/vit_model.py" → "src/models/vit_small.py"
+  - "src/tools/gradio_app.py" → "src/tools/web/app_gradio.py"
+  - "configs/cnn.yaml" → "configs/cls_cnn_small.yaml"
+  - "configs/vit.yaml" → "configs/cls_vit_s.yaml"
+
+
+───────────────────────────────────────────────────────────────────────────
+3. SỬA MỤC 1.1.2 - BÀI TOÁN PHÂN LOẠI
+───────────────────────────────────────────────────────────────────────────
+
+• Đầu vào: Ảnh RGB kích thước bất kỳ.
+• Đầu ra: Một trong 5 lớp:
+  - Healthy (Khỏe mạnh)
+  - Bacterial Blight (Đạo ôn lúa)
+  - Brown Spot (Đốm nâu)
+  - Blast (Cháy lá)
+  - Tungro (Vàng lùn)
+
+
+───────────────────────────────────────────────────────────────────────────
+4. THAY THẾ TOÀN BỘ MỤC 2.4.1 - THIẾT KẾ MÔ HÌNH
+───────────────────────────────────────────────────────────────────────────
+
+2.4.1. Thiết kế Dual Model System
+
+Khác với các dự án chỉ sử dụng một mô hình duy nhất, hệ thống được thiết kế 
+để hỗ trợ chạy song song cả hai kiến trúc:
+
+a) SmallCNN (Baseline - Mô hình chủ đạo theo yêu cầu môn học)
+   • Mô hình CNN nhỏ gọn tự xây dựng
+   • Kích thước: ~1.5 MB
+   • Tốc độ: ~15-20 ms/ảnh
+   • F1 Score: ~85.7%
+   • Accuracy: ~87.3%
+
+b) Vision Transformer Small (Mô hình bổ trợ cho độ chính xác cao)
+   • Sử dụng vit_small_patch16_224 từ timm
+   • Kích thước: ~87 MB
+   • Tốc độ: ~50-100 ms/ảnh
+   • F1 Score: ~87.6%
+   • Accuracy: ~89.2%
+
+Lý do thiết kế Dual Model:
+• Đáp ứng yêu cầu môn học (CNN)
+• Thể hiện hiểu biết về kiến trúc hiện đại (ViT)
+• Cho phép so sánh trade-off giữa tốc độ và độ chính xác
+• Linh hoạt trong triển khai thực tế
+
+Kiến trúc SmallCNN (4 Convolutional Blocks):
+• Block 1: 3 → 32 channels, MaxPool (224 → 112)
+• Block 2: 32 → 64 channels, MaxPool (112 → 56)
+• Block 3: 64 → 128 channels, MaxPool (56 → 28)  
+• Block 4: 128 → 256 channels, MaxPool (28 → 14)
+• Global Average Pooling
+• Dropout (0.3)
+• Fully Connected → 5 classes
+
+Ưu điểm SmallCNN:
+• Chỉ ~1-2 triệu parameters
+• Training nhanh, inference real-time
+• Phù hợp embedded systems
+• Dễ hiểu, dễ giải thích cho báo cáo
+
+Nhược điểm:
+• Receptive field hạn chế
+• Khó học global context
+• Cần data augmentation mạnh để tránh overfit
+
+
+───────────────────────────────────────────────────────────────────────────
+5. THÊM VÀO SAU MỤC 2.5 - CÁC MODULE MỚI
+───────────────────────────────────────────────────────────────────────────
+
+2.5.1. Unified Prediction Interface (predict.py)
+
+Để thuận tiện cho việc demo và so sánh models, hệ thống cung cấp một 
+interface thống nhất cho dự đoán.
+
+Tính năng:
+• Hỗ trợ chọn model: CNN (mặc định), ViT, hoặc cả hai
+• Dự đoán single image hoặc batch directory
+• Hiển thị kết quả chi tiết với metrics
+• Export JSON cho tích hợp hệ thống khác
+
+Ví dụ sử dụng:
+  # Dự đoán với CNN (default - yêu cầu môn học)
+  python -m src.tools.predict --image temp/test1.jpg
+
+  # Dự đoán với ViT (độ chính xác cao hơn)
+  python -m src.tools.predict --image temp/test1.jpg --model_type vit
+
+  # So sánh cả 2 models
+  python -m src.tools.predict --image temp/test1.jpg --model_type both
+
+Output bao gồm:
+• Model sử dụng (CNN/ViT)
+• Predicted class với confidence
+• Top-5 predictions với probability bars
+• Inference time (ms)
+• Tình trạng (Có bệnh/Khỏe mạnh)
+• Khuyến nghị model nào nên dùng
+
+
+2.5.2. Model Comparison Tool (compare_models.py)
+
+Tool phân tích toàn diện sự khác biệt giữa CNN và ViT.
+
+Chức năng:
+• Đánh giá cả 2 models trên cùng test set
+• So sánh accuracy, F1, precision, recall
+• Phân tích tốc độ inference
+• Tìm cases mà 2 models không đồng thuận
+• Xuất báo cáo CSV chi tiết
+
+Chạy:
+  python -m src.tools.compare_models
+
+Output sections:
+1. Tổng quan hiệu suất (accuracy, F1, precision, recall)
+2. Hiệu suất tốc độ (avg time, speedup factor)
+3. So sánh theo từng lớp
+4. Phân tích đồng thuận (agreement rate)
+5. Khuyến nghị sử dụng
+
+
+2.5.3. Visualization Tool (model_comparison.py)
+
+Tool tạo visualization so sánh CNN vs ViT với 6 subplots.
+
+Chạy:
+  python -m src.visualization.model_comparison \
+      --image temp/test1.jpg \
+      --save outputs/cnn_vs_vit_comparison.png
+
+Nội dung visualization:
+1. Ảnh gốc
+2. Dự đoán CNN (kết quả + confidence + thời gian)
+3. Dự đoán ViT (kết quả + confidence + thời gian)
+4. Top-5 so sánh (bar chart)
+5. Tất cả classes comparison (horizontal bars)
+6. Tốc độ inference comparison
+7. Phân tích đồng thuận + khuyến nghị
+
+Output: PNG file 150 DPI, phù hợp đưa vào báo cáo.
+
+
+───────────────────────────────────────────────────────────────────────────
+6. THAY THẾ TOÀN BỘ MỤC 2.6 - GIAO DIỆN GRADIO
+───────────────────────────────────────────────────────────────────────────
+
+2.6. Giao diện Gradio với Dual Model Support
+
+Giao diện Gradio được nâng cấp để hỗ trợ sử dụng cả 2 models trong cùng 1 app,
+phục vụ cho việc demo và so sánh trực tiếp.
+
+2.6.1. Thiết kế Interface
+
+Phần Header:
+• Tiêu đề: "Rice Leaf Disease Detection System"
+• Subtitle: "AI-Powered Disease Classification with Dual Model Support"
+• Thông tin cả 2 models:
+  - CNN (SmallCNN): Accuracy 87.3% | F1 85.7% | Fast (~15-20ms)
+  - ViT (Small): Accuracy 89.2% | F1 87.6% | High Accuracy (~50-100ms)
+• Tip: "So sánh cả 2 models bằng cách click cả 2 buttons với cùng 1 ảnh!"
+
+Phần bên trái (Input):
+• Upload ảnh lá lúa
+• Checkbox: Auto Color Normalization (mặc định bật)
+• Accordion "Manual Image Adjustments" (optional):
+  - Brightness slider (0-100)
+  - Contrast slider (0.5-1.5)
+  - Hue shift slider (-180 to 180)
+  - Saturation slider (0-3)
+  - Value slider (0-3)
+  - Rotation dropdown (0°, 90°, 180°, 270°)
+  - Flip Horizontal checkbox
+  - Flip Vertical checkbox
+
+• 2 Buttons dự đoán riêng biệt:
+  - "Predict with CNN" (primary button - màu xanh dương)
+  - "Predict with ViT" (secondary button - màu xanh lá)
+
+Phần bên phải (Output):
+• Ảnh gốc (Original Image)
+• Ảnh đã chỉnh sửa (Edited Preview)
+• Kết quả dự đoán (Markdown):
+  - Model đã sử dụng (CNN/ViT) với emoji phân biệt
+  - Model accuracy và F1 score
+  - Predicted disease
+  - Confidence level
+  - Validation message
+  - Normalization info (nếu có)
+  - All class probabilities với progress bars
+• Bar chart: Class Probability Distribution
+
+2.6.2. Quy trình khi click button dự đoán
+
+Khi người dùng click "Predict with CNN":
+1. Lấy ảnh đã upload
+2. Áp dụng manual edits (brightness, contrast, etc.)
+3. Áp dụng auto color normalization (nếu enabled)
+4. Transform chuẩn hóa (resize 224x224, normalize)
+5. Forward qua CNN model
+6. Tính softmax probabilities
+7. Lấy top-1 prediction
+8. Validate nếu là ảnh lá lúa
+9. Hiển thị kết quả với thông tin:
+   • Emoji CNN
+   • "Model Used: CNN (SmallCNN)"
+   • Model metrics (Accuracy 87.3%, F1 85.7%)
+   • Predicted class + confidence
+   • Top-5 predictions với bars
+   • Tình trạng (Có bệnh/Khỏe mạnh)
+
+Khi người dùng click "Predict with ViT":
+• Quy trình tương tự nhưng:
+  - Sử dụng ViT model thay vì CNN
+  - Hiển thị emoji ViT
+  - Hiển thị ViT metrics (Accuracy 89.2%, F1 87.6%)
+
+2.6.3. Load cả 2 models khi khởi động
+
+Khác với thiết kế cũ chỉ load 1 model, app hiện tại load cả 2 models 
+ngay từ đầu:
+
+• Load CNN từ: runs/cls_cnn_small/weights/cnn_small_best.pt
+• Load ViT từ: runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt
+• Lưu vào dictionary để dễ truy cập
+
+Lợi ích:
+• Người dùng có thể so sánh ngay lập tức
+• Không cần restart app để đổi model
+• Giảng viên có thể test cả 2 models trong 1 session
+• Phù hợp cho demo cuối kỳ
+
+2.6.4. Validation và Auto Normalization
+
+App tích hợp 2 tính năng nâng cao:
+
+1. Rice Leaf Validation:
+   • Kiểm tra xem ảnh có phải lá lúa không
+   • Dựa vào confidence distribution
+   • Cảnh báo nếu: max_confidence < 60%
+   • Message: "Low confidence - may not be rice leaf"
+
+2. Auto Color Normalization:
+   • Tự động chuẩn hóa màu sắc lá về tông xanh chuẩn
+   • Điều chỉnh hue, saturation, brightness
+   • Giúp model dự đoán chính xác hơn
+   • Hiển thị normalization stats trong output
+
+2.6.5. Tabs bổ sung
+
+App còn có các tabs khác:
+• Tab "About Model": Thông tin chi tiết về cả 2 models
+• Tab "Pipeline": Visualization workflow
+• Tab "Help": Hướng dẫn sử dụng
+
+Chạy app:
+  python -m src.tools.web.app_gradio
+
+App sẽ chạy trên http://0.0.0.0:7860
+
+
+───────────────────────────────────────────────────────────────────────────
+7. SỬA MỤC 2.4.3 - TÊN FILE CONFIG
+───────────────────────────────────────────────────────────────────────────
+
+Hai file cấu hình:
+• configs/cls_cnn_small.yaml (cho CNN)
+• configs/cls_vit_s.yaml (cho ViT)
+
+Bao gồm:
+• Mô hình
+• Batch size
+• Accumulation steps
+• Optimizer: AdamW
+• Learning rate: 3e-4
+• Epoch: 20-30
+• Label smoothing: 0.1
+• Augmentation bật/tắt
+• Đường dẫn checkpoint
+
+
+───────────────────────────────────────────────────────────────────────────
+8. SỬA MỤC 2.4.4 - LỆNH TRAIN
+───────────────────────────────────────────────────────────────────────────
+
+Lệnh train:
+
+Train CNN:
+  python src/train.py --task cls --config configs/cls_cnn_small.yaml
+
+Train ViT:
+  python src/train.py --task cls --config configs/cls_vit_s.yaml
+
+Script thực hiện:
+• Đọc file config YAML
+• Khởi tạo dataloader cho train/val
+• Tạo model theo model_name, set num_classes=5
+• Khởi tạo optimizer, scheduler, loss (CrossEntropy với label smoothing)
+
+Vòng lặp epoch:
+• Gọi train_one_epoch:
+  - Duyệt mini-batch, forward, tính loss, backward với AMP
+  - Tích lũy gradient theo accumulation_steps
+  - Cập nhật optimizer
+  - Tính accuracy, F1 macro trên tập train
+• Gọi evaluate trên val set:
+  - Tính loss, accuracy, F1 macro
+• Lưu checkpoint tốt nhất theo tiêu chí F1 val:
+  - CNN: runs/cls_cnn_small/weights/cnn_small_best.pt (~1.5 MB)
+  - ViT: runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt (~87 MB)
+• Nếu không cải thiện sau patience epoch → dừng sớm
+
+
+───────────────────────────────────────────────────────────────────────────
+9. THÊM VÀO PHẦN INSTALLATION/REQUIREMENTS
+───────────────────────────────────────────────────────────────────────────
+
+Dự án cung cấp 2 file requirements:
+
+1. requirements.txt (Full installation):
+   • Bao gồm tất cả dependencies với pinned versions
+   • Sử dụng cho development và training
+   • Các packages chính:
+     - torch==2.4.1, torchvision==0.19.1
+     - timm==1.0.21 (ViT models)
+     - opencv-python==4.12.0.88
+     - matplotlib==3.10.6, seaborn==0.13.2
+     - scikit-learn==1.7.2
+     - gradio==5.49.1, streamlit==1.50.0
+     - fastapi==0.120.0
+
+2. requirements-minimal.txt (Minimal installation):
+   • Chỉ core dependencies cho inference
+   • Nhẹ hơn, cài nhanh hơn
+   • Phù hợp cho deployment
+
+Installation:
+  # Full installation (recommended)
+  pip install -r requirements.txt
+
+  # Minimal (inference only)
+  pip install -r requirements-minimal.txt
+
+  # With CUDA 12.1 support
+  pip install torch==2.4.1+cu121 torchvision==0.19.1+cu121 \
+      --index-url https://download.pytorch.org/whl/cu121
+
+
+───────────────────────────────────────────────────────────────────────────
+10. SỬA MỤC 2.5 - MODULE SUY LUẬN
+───────────────────────────────────────────────────────────────────────────
+
+Module suy luận được tách thành file: src/tools/infer_one.py
+
+Quy trình suy luận:
+• Load ảnh người dùng cung cấp
+• Áp dụng transform chuẩn
+• Chuyển sang tensor
+• Forward qua mô hình (CNN hoặc ViT)
+• Tính softmax
+• Xuất nhãn + xác suất
+
+Chạy:
+  # Với CNN
+  python -m src.tools.infer_one --img temp/test1.jpg --model_type cnn
+
+  # Với ViT
+  python -m src.tools.infer_one --img temp/test1.jpg --model_type vit
+
+Suy luận có thể chạy bằng CPU, thời gian:
+• CNN: ~0.2-0.5s/ảnh
+• ViT: ~0.5-1s/ảnh
+
+
+═══════════════════════════════════════════════════════════════════════════
+KẾT LUẬN
+═══════════════════════════════════════════════════════════════════════════
+
+Những điểm quan trọng cần nhấn mạnh trong báo cáo:
+
+1. Dual Model Architecture:
+   • CNN là model chủ đạo (yêu cầu môn học)
+   • ViT là model bổ trợ để so sánh và nâng cao độ chính xác
+   • Hai models chạy song song, người dùng tự chọn
+
+2. Số lớp phân loại:
+   • 5 lớp (bao gồm cả "healthy")
+   • Không phải 4 lớp như một số báo cáo khác
+
+3. Các tools tiên tiến:
+   • predict.py: Unified interface
+   • compare_models.py: So sánh chi tiết
+   • model_comparison.py: Visualization
+
+4. Gradio app:
+   • 2 buttons riêng biệt cho CNN và ViT
+   • Load cả 2 models ngay từ đầu
+   • Phù hợp cho demo và báo vệ
+
+5. Checkpoints:
+   • CNN: ~1.5 MB
+   • ViT: ~87 MB
+   • Cả 2 đều được train và có checkpoint riêng
+
+═══════════════════════════════════════════════════════════════════════════
+HẾT
+═══════════════════════════════════════════════════════════════════════════

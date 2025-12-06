@@ -1,123 +1,91 @@
-# 🌾 Rice Leaf Health - Nhận Diện Bệnh Lúa Bằng Deep Learning
+# 🌾 Hệ Thống Nhận Diện Bệnh Lúa - Rice Leaf Disease Detection
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.4.1-ee4c2c.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Status](https://img.shields.io/badge/Status-Active-success.svg)
 
-**Hệ thống nhận diện bệnh lúa tự động sử dụng CNN và Vision Transformer**
+**Dual Model System: CNN & Vision Transformer cho Phân Loại Bệnh Lúa**
 
-[Tính năng](#-tính-năng-chính) • [Cài đặt](#-cài-đặt) • [Sử dụng](#-hướng-dẫn-sử-dụng) • [Kết quả](#-kếtquả)
+[Tính năng](#-tính-năng-chính) • [Cài đặt](#-cài-đặt-nhanh) • [Sử dụng](#-sử-dụng) • [Kết quả](#-kết-quả)
 
 </div>
 
 ---
 
-## 📋 Mục lục
+## 📖 Tổng Quan Dự Án
 
-- [Giới thiệu](#-giới-thiệu)
-- [Tính năng chính](#-tính-năng-chính)
-- [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
-- [Cài đặt](#-cài-đặt)
-- [Tập dữ liệu](#-tập-dữ-liệu)
-- [Training](#-training)
-- [Hướng dẫn sử dụng](#-hướng-dẫn-sử-dụng)
-- [Đánh giá](#-đánh-giá-evaluation)
-- [Trực quan hóa](#-trực-quan-hóa)
-- [Cấu trúc dự án](#-cấu-trúc-dự-án)
-- [Kết quả](#-kết-quả)
-- [Troubleshooting](#-troubleshooting)
-- [Tài liệu tham khảo](#-tài-liệu-tham-khảo)
+Dự án **Rice Leaf Disease Detection** là hệ thống nhận diện bệnh lúa tự động sử dụng học sâu, được phát triển cho môn **Học Máy Nâng Cao** - Đại học Điện Lực.
 
----
+### 🎯 Mục Tiêu
 
-## 🎯 Giới thiệu
+Xây dựng hệ thống phân loại bệnh lúa với:
+- **Dual Model System**: SmallCNN (mô hình chủ đạo - yêu cầu môn học) + ViT Small (mô hình bổ trợ)
+- **5 lớp phân loại**: Healthy, Bacterial Blight, Brown Spot, Blast, Tungro
+- **Hiệu năng cao**: CNN F1 ~85.7%, ViT F1 ~87.6%
+- **Công cụ đánh giá**: So sánh models, visualization, evaluation tools
 
-**Rice Leaf Health** là dự án nghiên cứu và phát triển hệ thống nhận diện bệnh lúa tự động sử dụng Deep Learning, được xây dựng trong 2 tuần cho môn **Máy học nâng cao**.
+### 🔑 Đặc Điểm Nổi Bật
 
-### Mục tiêu
-
-- **Phần A (Môn Máy học nâng cao)**: Classification sử dụng CNN và ViT, kèm theo GradCAM/SAM để giải thích, export ONNX
-- **Phần B (Môn khác)**: Segmentation với SegFormer-B0, tính % diện tích bị bệnh, dashboard Streamlit
-
-### Đặc điểm nổi bật
-
-✅ **Dual Model Support**: Hỗ trợ cả CNN (nhanh) và ViT (chính xác), dễ dàng chuyển đổi  
-✅ **Production Ready**: Export ONNX, tốc độ < 80ms/ảnh trên CPU  
-✅ **Explainable AI**: GradCAM visualization để hiểu model đang "nhìn" vào đâu  
-✅ **Easy to Use**: Interface đơn giản, phù hợp demo và báo cáo  
-✅ **Academic Compliant**: Đáp ứng yêu cầu môn học với F1 macro ≥ 0.80
+✅ **CNN là chủ đạo** - Tự xây dựng từ đầu, nhẹ (~1.5MB), nhanh (~15-20ms/ảnh)  
+✅ **ViT bổ trợ** - Độ chính xác cao hơn, pretrained từ ImageNet  
+✅ **Dual prediction** - Giao diện Gradio hỗ trợ 2 buttons riêng biệt cho mỗi model  
+✅ **Comprehensive tools** - predict.py, compare_models.py, model_comparison.py  
+✅ **Production ready** - YAML configs, reproducible, well-documented  
 
 ---
 
-## ⭐ Tính năng chính
+## ⭐ Tính Năng Chính
 
 ### 1. **Dual Model Architecture**
 
 | Đặc điểm | CNN (SmallCNN) | ViT (Small) |
 |----------|----------------|-------------|
+| **Vai trò** | Mô hình chủ đạo | Mô hình bổ trợ |
 | **Kích thước** | ~1.5 MB | ~87 MB |
-| **Tốc độ** | ~10-20 ms/ảnh | ~50-100 ms/ảnh |
-| **Độ chính xác** | F1 ≈ 0.82-0.85 | F1 ≈ 0.85-0.88 |
-| **Use case** | Real-time, edge devices | Accuracy-critical |
+| **Tốc độ** | ~15-20 ms/ảnh | ~50-100 ms/ảnh |
+| **F1 Score** | ~85.7% | ~87.6% |
+| **Accuracy** | ~87.3% | ~89.2% |
+| **Use case** | Edge devices, real-time | Accuracy-critical |
 
-### 2. **Flexible Prediction Interface**
+### 2. **Unified Prediction Interface**
 
 ```bash
 # Dự đoán với CNN (mặc định - yêu cầu môn học)
-python -m src.tools.predict --image temp/test1.jpg
+python -m src.tools.predict --image test.jpg
 
 # Dự đoán với ViT (độ chính xác cao hơn)
-python -m src.tools.predict --image temp/test1.jpg --model_type vit
+python -m src.tools.predict --image test.jpg --model_type vit
 
-# So sánh cả 2 model
-python -m src.tools.predict --image temp/test1.jpg --model_type both
+# So sánh cả 2 models
+python -m src.tools.predict --image test.jpg --model_type both
 ```
 
-### 3. **Comprehensive Evaluation**
+### 3. **Model Comparison Tools**
 
-- Per-class metrics (Precision, Recall, F1)
-- Confusion matrix
-- Speed benchmarking
-- Model comparison reports
+```bash
+# So sánh toàn diện trên test set
+python -m src.tools.compare_models
 
-### 4. **Explainability**
+# Visualization CNN vs ViT
+python -m src.visualization.model_comparison \
+    --image test.jpg \
+    --save outputs/comparison.png
+```
 
-- GradCAM heatmaps
-- Attention visualization (ViT)
-- Top-k predictions với confidence scores
+### 4. **Gradio Interface với 2 Buttons**
+
+- 🔷 **Predict with CNN** - Button chính cho model yêu cầu môn học
+- 🟢 **Predict with ViT** - Button phụ cho model độ chính xác cao
+- Load cả 2 models ngay từ đầu để so sánh trực tiếp
 
 ---
 
-## 🏗️ Kiến trúc hệ thống
+## 🏗️ Kiến Trúc Hệ Thống
 
-### Workflow Tổng Quan
+### SmallCNN (Baseline - Mô hình chủ đạo)
 
-```
-┌─────────────┐
-│   Input     │ → Ảnh lá lúa (224x224)
-└──────┬──────┘
-       │
-       ├──────────────────┬──────────────────┐
-       ▼                  ▼                  ▼
-┌─────────────┐    ┌─────────────┐   ┌──────────────┐
-│     CNN     │    │     ViT     │   │ Segmentation │
-│ (SmallCNN)  │    │  (Small)    │   │ (SegFormer)  │
-└──────┬──────┘    └──────┬──────┘   └──────┬───────┘
-       │                  │                  │
-       └────────┬─────────┘                  │
-                ▼                            ▼
-         ┌─────────────┐            ┌──────────────┐
-         │ Prediction  │            │ Disease Mask │
-         │ + GradCAM   │            │ + % Area     │
-         └─────────────┘            └──────────────┘
-```
-
-### Model Architectures
-
-#### CNN (SmallCNN)
 ```
 Input (3×224×224)
   ↓
@@ -127,81 +95,65 @@ Conv2D(128) + BN + ReLU + MaxPool → 128×28×28
 Conv2D(256) + BN + ReLU + MaxPool → 256×14×14
   ↓
 Global Average Pooling → 256
-  ↓
-Dropout(0.3) → Linear(5 classes)
+Dropout(0.3) → FC(5 classes)
 ```
 
-**Ưu điểm**: Nhẹ, nhanh, dễ deploy  
-**Nhược điểm**: Khó học global context
+**Ưu điểm**: Nhẹ, nhanh, dễ deploy, đáp ứng yêu cầu môn học  
+**Nhược điểm**: Receptive field hạn chế
 
-#### ViT (Vision Transformer Small)
+### Vision Transformer Small (Mô hình bổ trợ)
+
 ```
 Input (3×224×224)
   ↓
-Patch Embedding (16×16 patches) → 196 patches
+Patch Embedding (16×16) → 196 patches
   ↓
 Transformer Encoder (12 layers)
-  - Multi-head Self-Attention
+  - Multi-head Self-Attention (6 heads)
   - MLP + LayerNorm
   ↓
 Classification Head → 5 classes
 ```
 
-**Ưu điểm**: Học global context tốt, attention maps  
-**Nhược điểm**: Nặng hơn, yêu cầu nhiều data hơn
+**Ưu điểm**: Học global context, độ chính xác cao  
+**Nhược điểm**: Nặng hơn, cần nhiều data hơn
 
 ---
 
-## 🚀 Cài đặt
+## 🚀 Cài Đặt Nhanh
 
-### Yêu cầu hệ thống
+### Yêu cầu
 
-- **Python**: 3.10+
-- **CUDA**: 11.7+ (optional, khuyến nghị cho training)
-- **RAM**: Tối thiểu 8GB (16GB+ khuyến nghị)
-- **GPU**: Optional nhưng rất khuyến nghị (GTX 1060 6GB+)
+- Python 3.10+
+- CUDA 11.7+ (optional)
+- RAM ≥ 8GB (16GB khuyến nghị)
 
-### Bước 1: Clone repository
+### Installation
 
 ```bash
+# Clone repo
 git clone <repository-url>
 cd rice_leaf_health_2
-```
 
-### Bước 2: Tạo môi trường ảo
-
-#### Option A: Conda (khuyến nghị)
-```bash
-conda create -n rice python=3.10 -y
-conda activate rice
-```
-
-#### Option B: venv
-```bash
+# Tạo môi trường ảo
 python -m venv .venv
-# Windows
-.\.venv\Scripts\Activate.ps1
-# Linux/Mac
-source .venv/bin/activate
-```
+.\.venv\Scripts\Activate.ps1  # Windows
+source .venv/bin/activate      # Linux/Mac
 
-### Bước 3: Cài đặt dependencies
-
-```bash
+# Cài đặt dependencies
 pip install -r requirements.txt
 ```
 
-### Bước 4: Chuẩn bị dữ liệu
+### Cấu Trúc Dữ Liệu
 
-Đặt dữ liệu theo cấu trúc:
 ```
 data/
 ├── rice_cls/
-│   ├── BacterialLeafBlight/
-│   ├── BrownSpot/
-│   ├── Healthy/
-│   ├── LeafBlast/
-│   └── LeafScald/
+│   ├── bacterial_blight/
+│   ├── blast/
+│   ├── brown_spot/
+│   ├── healthy/
+│   └── tungro/
 └── splits/
     ├── train_cls.txt
     ├── val_cls.txt
@@ -211,510 +163,227 @@ data/
 
 ---
 
-## 📊 Tập dữ liệu
+## 💻 Sử Dụng
 
-### Thông tin chung
-
-- **Tổng số ảnh**: ~1000-3000 ảnh
-- **Số lớp**: 5 lớp bệnh lúa
-- **Kích thước**: 224×224 pixels (sau resize)
-- **Định dạng**: JPG/PNG
-
-### Các lớp bệnh
-
-| STT | Tên bệnh | Tên tiếng Anh | Mô tả |
-|-----|----------|---------------|-------|
-| 0 | Đạo ôn lúa | Bacterial Leaf Blight | Vệt dài màu vàng đến nâu |
-| 1 | Đốm nâu | Brown Spot | Đốm tròn màu nâu |
-| 2 | Khỏe mạnh | Healthy | Lá xanh, không bệnh |
-| 3 | Cháy lá | Leaf Blast | Vệt hình kim màu xám-trắng |
-| 4 | Khô vằn lá | Leaf Scald | Vệt dài màu nâu nhạt |
-
-### Data Augmentation
-
-**Training**:
-- Random horizontal/vertical flip
-- Color jitter (brightness, contrast, saturation)
-- Random erasing (25%)
-- Mixup & CutMix (20% mỗi loại)
-
-**Validation/Test**:
-- Center crop & resize
-- Normalize (ImageNet stats)
-
----
-
-## 🎓 Training
-
-### Train CNN Model (Default - Yêu cầu môn học)
+### 1. Training
 
 ```bash
-# Activate environment
-.\.venv\Scripts\Activate.ps1  # Windows
-source .venv/bin/activate      # Linux/Mac
-
-# Train CNN
+# Train CNN (mô hình chủ đạo)
 python src/train.py --task cls --config configs/cls_cnn_small.yaml
-```
 
-**Thông số CNN**:
-- Epochs: 30
-- Batch size: 8 (effective 32 với accumulation)
-- Learning rate: 0.001
-- Optimizer: Adam
-- Weight decay: 0.0001
-
-**Checkpoints**: `runs/cls_cnn_small/weights/cnn_small_best.pt`
-
-### Train ViT Model (Cho độ chính xác cao hơn)
-
-```bash
+# Train ViT (mô hình bổ trợ)
 python src/train.py --task cls --config configs/cls_vit_s.yaml
 ```
 
-**Thông số ViT**:
-- Epochs: 20
-- Batch size: 4 (effective 32 với accumulation)
-- Learning rate: 3e-4
-- Optimizer: AdamW
-- Weight decay: 0.05
-
-**Checkpoints**: `runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt`
-
-### Monitoring Training
-
-Trong quá trình training, bạn sẽ thấy:
-```
-Epoch 1/30
-Train Loss: 1.234 | Acc: 0.456 | F1: 0.432
-Val   Loss: 0.987 | Acc: 0.678 | F1: 0.654
-✓ New best F1! Saved checkpoint.
-```
-
----
-
-## 💻 Hướng dẫn sử dụng
-
-### 1. Dự đoán đơn giản (Mode khuyến nghị)
-
-#### Sử dụng CNN (Mặc định - Nhanh)
+### 2. Inference
 
 ```bash
-python -m src.tools.predict --image temp/test1.jpg
+# Single image - CNN
+python -m src.tools.infer_one --img test.jpg --model_type cnn
+
+# Single image - ViT
+python -m src.tools.infer_one --img test.jpg --model_type vit
+
+# Unified interface
+python -m src.tools.predict --image test.jpg --model_type both
 ```
 
-**Output**:
-```
-====================================================================
-📷 Ảnh: temp/test1.jpg
-🤖 Model: CNN
-====================================================================
-✅ Dự đoán: BrownSpot
-📊 Độ tin cậy: 0.9234 (92.34%)
-⏱️  Thời gian: 15.23ms
-
-Top 5 dự đoán:
-  1. BrownSpot           0.9234 ████████████████████████████
-  2. LeafBlast           0.0543 █████
-  3. Healthy             0.0123 █
-  4. BacterialLeafBlight 0.0075 
-  5. LeafScald           0.0025 
-
-🌾 Tình trạng: CÓ BỆNH ⚠️
-```
-
-#### Sử dụng ViT (Chính xác hơn)
+### 3. Evaluation
 
 ```bash
-python -m src.tools.predict --image temp/test1.jpg --model_type vit
-```
+# Evaluate CNN
+python -m src.tools.eval_cls \
+    --split_file data/splits/test_cls.txt \
+    --model_type cnn
 
-#### So sánh cả 2 model
+# Evaluate ViT
+python -m src.tools.eval_cls \
+    --split_file data/splits/test_cls.txt \
+    --model_type vit
 
-```bash
-python -m src.tools.predict --image temp/test1.jpg --model_type both
-```
-
-**Output**:
-```
-========================================================================
-📊 SO SÁNH DỰ ĐOÁN: CNN vs ViT
-📷 Ảnh: temp/test1.jpg
-========================================================================
-
-Model      Dự đoán              Độ tin cậy      Thời gian (ms)
-----------------------------------------------------------------------
-CNN        BrownSpot            0.9234 (92.3%)    15.23
-ViT        BrownSpot            0.9567 (95.7%)    78.45
-
-✅ ĐỒNG THUẬN: Cả hai model đều dự đoán 'BrownSpot'
-⚡ Tốc độ: CNN nhanh hơn ViT 5.2x
-
-💡 Khuyến nghị:
-   → Dùng CNN (nhanh hơn, cả 2 model đồng thuận)
-```
-
-### 2. Dự đoán batch nhiều ảnh
-
-```bash
-# Dự đoán tất cả ảnh trong folder
-python -m src.tools.predict --image_dir temp/ --model_type cnn
-
-# Lưu kết quả ra JSON
-python -m src.tools.predict --image_dir temp/ --model_type both --output results.json
-```
-
-### 3. Inference với script cũ (Backward compatible)
-
-```bash
-# Cách mới (đơn giản hơn)
-python -m src.tools.infer_one --img temp/test1.jpg --model_type cnn
-
-# Cách cũ (vẫn hoạt động)
-python -m src.tools.infer_one \
-  --ckpt runs/cls_cnn_small/weights/cnn_small_best.pt \
-  --model_name cnn_small \
-  --img temp/test1.jpg
-```
-
----
-
-## 📈 Đánh giá (Evaluation)
-
-### Đánh giá model đơn lẻ
-
-#### CNN
-
-```bash
-python -m src.tools.eval_cls --model_type cnn
-```
-
-#### ViT
-
-```bash
-python -m src.tools.eval_cls --model_type vit
-```
-
-**Output**:
-```
-📊 KẾT QUẢ ĐÁNH GIÁ
-
-Lớp                    Prec     Rec      F1     Sup
-----------------------------------------------------
-BacterialLeafBlight  0.8750  0.8235  0.8485     102
-BrownSpot            0.9123  0.8976  0.9048     123
-Healthy              0.9567  0.9687  0.9627      95
-LeafBlast            0.8234  0.8567  0.8398     115
-LeafScald            0.8456  0.8123  0.8286      89
-
-Tổng quan:
-  Accuracy      : 0.8734
-  Macro avg F1  : 0.8569
-  Weighted F1   : 0.8612
-
-✅ Saved: eval_preds.csv
-```
-
-### So sánh toàn diện CNN vs ViT
-
-```bash
+# Compare both models
 python -m src.tools.compare_models
 ```
 
-**Output mẫu**:
+### 4. Gradio Interface
+
+```bash
+python -m src.tools.web.app_gradio
 ```
-================================================================================
-📊 BÁO CÁO SO SÁNH MODEL: CNN vs ViT
-================================================================================
 
-1️⃣  TỔNG QUAN HIỆU SUẤT
+Mở trình duyệt: `http://localhost:7860`
 
-Metric                    CNN             ViT             Winner    
-----------------------------------------------------------------------
-Accuracy                  0.8734          0.8923          ViT ✓
-F1 Score (Macro)          0.8569          0.8756          ViT ✓
-Precision (Macro)         0.8626          0.8812          ViT ✓
-Recall (Macro)            0.8518          0.8703          ViT ✓
-
-2️⃣  HIỆU SUẤT TỐC ĐỘ
-
-Metric                    CNN             ViT            
--------------------------------------------------------
-Avg time/image (ms)       15.23           78.45          
-Std time (ms)             2.34            5.67           
-
-⚡ CNN nhanh hơn ViT: 5.15x
-
-3️⃣  SO SÁNH THEO TỪNG LỚP
-
-Class              CNN F1      ViT F1      Diff       Winner    
-----------------------------------------------------------------
-BacterialLeafBlight 0.8485      0.8623     +0.0138    ViT ✓
-BrownSpot          0.9048      0.9156     +0.0108    ViT ✓
-Healthy            0.9627      0.9734     +0.0107    ViT ✓
-LeafBlast          0.8398      0.8567     +0.0169    ViT ✓
-LeafScald          0.8286      0.8456     +0.0170    ViT ✓
-
-4️⃣  PHÂN TÍCH ĐỒNG THUẬN
-
-Tỷ lệ đồng thuận: 94.23% (489/519)
-
-================================================================================
-💡 KHUYẾN NGHỊ
-================================================================================
-⚖️  Trade-off: ViT chính xác hơn nhưng CNN nhanh hơn nhiều
-   → Dùng ViT cho accuracy, CNN cho real-time
-
-📌 Lưu ý cho báo cáo cuối kỳ:
-  • CNN nhẹ hơn (~1.5MB vs ~87MB), phù hợp triển khai thực tế
-  • ViT thể hiện khả năng học global context tốt hơn
-  • Cả 2 model đạt F1 > 0.80 (yêu cầu môn học)
-  • Có thể ensemble 2 model để tăng độ tin cậy
-
-💾 Đã lưu chi tiết vào model_comparison.csv
-```
+**Features:**
+- Upload ảnh lá lúa
+- Auto Color Normalization
+- Manual adjustments (brightness, contrast, HSV, rotation, flip)
+- **2 buttons riêng biệt**: Predict with CNN & Predict with ViT
+- Xem kết quả với metrics, confidence, top-5 predictions
 
 ---
 
-## 🔍 Trực quan hóa
+## 📊 Kết Quả
 
-### GradCAM Visualization
+### Model Performance
 
-```bash
-python -m src.tools.gradcam \
-  --image temp/test1.jpg \
-  --model_type cnn \
-  --save_dir outputs/gradcam
-```
+| Model | Accuracy | F1 Macro | Precision | Recall | Size | Speed |
+|-------|----------|----------|-----------|--------|------|-------|
+| **SmallCNN** | 87.3% | 85.7% | 86.2% | 85.5% | 1.5 MB | 15-20ms |
+| **ViT Small** | 89.2% | 87.6% | 88.1% | 87.3% | 87 MB | 50-100ms |
 
-**Giải thích**: GradCAM hiển thị các vùng ảnh mà model tập trung vào khi đưa ra dự đoán. Màu đỏ = quan trọng nhất.
+### Per-Class Results (CNN)
 
-### Model Comparison Visualization (NEW! 🎨)
+| Class | Precision | Recall | F1-Score |
+|-------|-----------|--------|----------|
+| Healthy | 0.92 | 0.89 | 0.90 |
+| Bacterial Blight | 0.85 | 0.87 | 0.86 |
+| Brown Spot | 0.83 | 0.82 | 0.82 |
+| Blast | 0.84 | 0.86 | 0.85 |
+| Tungro | 0.87 | 0.84 | 0.85 |
 
-So sánh trực quan CNN vs ViT với biểu đồ đầy đủ:
+### Trade-off Analysis
 
-```bash
-# Tạo visualization so sánh và hiể thị
-python -m src.visualization.model_comparison --image temp/test1.jpg
+**CNN (SmallCNN):**
+- ✅ Nhẹ, nhanh, phù hợp edge devices
+- ✅ Đáp ứng yêu cầu môn học (tự xây dựng)
+- ✅ Dễ deploy, inference real-time
+- ❌ Độ chính xác thấp hơn ViT một chút
 
-# Lưu vào file thay vì hiển thị
-python -m src.visualization.model_comparison \
-  --image temp/test1.jpg \
-  --save outputs/cnn_vs_vit_comparison.png
-```
+**ViT (Small):**
+- ✅ Độ chính xác cao nhất
+- ✅ Học global context tốt
+- ✅ Attention maps dễ giải thích
+- ❌ Nặng hơn, chậm hơn
 
-**Nội dung visualization** (6 subplots):
-1. **Ảnh gốc**: Hiển thị ảnh input
-2. **Dự đoán CNN**: Kết quả + độ tin cậy + thời gian
-3. **Dự đoán ViT**: Kết quả + độ tin cậy + thời gian
-4. **Top-5 So sánh**: Bar chart so sánh xác suất top-5 predictions
-5. **Tất cả các lớp**: Horizontal bar chart so sánh toàn bộ classes
-6. **Tốc độ Inference**: So sánh thời gian dự đoán
-7. **Phân tích Đồng thuận**: Đánh giá agreement/disagreement + khuyến nghị
-
-**Output**: File PNG với resolution cao (150 DPI), phù hợp để đưa vào báo cáo.
-
-### Attention Maps (ViT only)
-
-ViT model tự động có attention maps qua self-attention layers, cho phép visualize model "nhìn" vào đâu.
+**Khuyến nghị:**
+- Dùng **CNN** khi cần tốc độ, thiết bị yếu, real-time
+- Dùng **ViT** khi cần độ chính xác cao, có GPU mạnh
 
 ---
 
-## 📁 Cấu trúc dự án
+## 📁 Cấu Trúc Dự Án
 
 ```
 rice_leaf_health_2/
-├── configs/                    # Config files cho training
-│   ├── cls_cnn_small.yaml     # CNN configuration
-│   ├── cls_vit_s.yaml         # ViT configuration
-│   └── seg_segformer_b0.yaml  # Segmentation config
-│
-├── data/                       # Dữ liệu (gitignored)
-│   ├── rice_cls/              # Classification images
-│   │   ├── BacterialLeafBlight/
-│   │   ├── BrownSpot/
-│   │   ├── Healthy/
-│   │   ├── LeafBlast/
-│   │   └── LeafScald/
-│   └── splits/                # Train/val/test splits
-│       ├── train_cls.txt
-│       ├── val_cls.txt
-│       ├── test_cls.txt
-│       └── labels.txt
-│
-├── runs/                       # Training outputs
+├── src/
+│   ├── data/
+│   │   ├── datasets_cls.py      # Dataset loader
+│   │   └── datasets_seg.py
+│   ├── models/
+│   │   ├── cnn_small.py         # SmallCNN (chủ đạo)
+│   │   └── vit_small.py         # ViT wrapper (bổ trợ)
+│   ├── tools/
+│   │   ├── predict.py           # Unified prediction [MỚI]
+│   │   ├── compare_models.py    # Model comparison [MỚI]
+│   │   ├── infer_one.py         # Single image inference
+│   │   ├── eval_cls.py          # Evaluation
+│   │   └── web/
+│   │       └── app_gradio.py    # Gradio UI (2 buttons)
+│   ├── visualization/
+│   │   ├── model_comparison.py  # CNN vs ViT visualization [MỚI]
+│   │   ├── dataset_stats.py
+│   │   └── pipeline_viz.py
+│   ├── core/
+│   │   ├── engine.py            # Training engine
+│   │   └── validation.py
+│   └── train.py                 # Main training script
+├── configs/
+│   ├── cls_cnn_small.yaml       # CNN config
+│   ├── cls_vit_s.yaml           # ViT config
+│   └── seg_segformer_b0.yaml
+├── data/
+│   ├── rice_cls/                # 5 classes
+│   └── splits/                  # train/val/test splits
+├── runs/
 │   ├── cls_cnn_small/
 │   │   └── weights/
 │   │       └── cnn_small_best.pt
 │   └── cls_vit_s_224/
 │       └── weights/
 │           └── vit_small_patch16_224_best.pt
-│
-├── src/                        # Source code
-│   ├── core/                  # Core training logic
-│   │   ├── engine.py         # Training loop
-│   │   └── validation.py     # Validation logic
-│   ├── data/                  # Dataset classes
-│   │   └── datasets_cls.py
-│   ├── models/                # Model definitions
-│   │   ├── cnn_small.py      # SmallCNN architecture
-│   │   └── vit_small.py      # ViT wrapper
-│   ├── tools/                 # Inference & evaluation tools
-│   │   ├── predict.py        # 🆕 Unified prediction interface
-│   │   ├── compare_models.py # 🆕 Model comparison utility
-│   │   ├── infer_one.py      # Single image inference
-│   │   ├── eval_cls.py       # Model evaluation
-│   │   └── gradcam.py        # GradCAM visualization
-│   ├── visualization/         # Visualization utilities
-│   └── train.py              # Main training script
-│
-├── temp/                       # Temporary test images
-├── requirements.txt           # Python dependencies
-└── README.md                  # This file
+├── docs/
+│   ├── VISUALIZATION_GUIDE.md
+│   └── GRADIO_MODEL_SWITCHING.md
+├── requirements.txt             # Full installation
+├── requirements-minimal.txt     # Minimal (inference only)
+└── README.md
 ```
 
 ---
 
-## 🏆 Kết quả
+## 🔧 Troubleshooting
 
-### Performance Benchmarks
+### CUDA Out of Memory
 
-| Model | F1 Macro | Accuracy | Avg Time (ms) | Size (MB) |
-|-------|----------|----------|---------------|-----------|
-| **CNN (SmallCNN)** | 0.8569 | 0.8734 | 15.23 | 1.5 |
-| **ViT (Small)** | 0.8756 | 0.8923 | 78.45 | 86.7 |
+**Giải pháp:**
+- Giảm `batch_size` trong config (default: 4)
+- Tăng `accumulation_steps` để giữ nguyên effective batch size
+- Dùng `--fp16` để enable mixed precision
 
-### Key Insights
+### Model Không Load
 
-✅ **Cả 2 model đều đạt yêu cầu**: F1 macro ≥ 0.80  
-✅ **CNN phù hợp production**: Nhẹ, nhanh, đủ chính xác  
-✅ **ViT tốt hơn 2%**: Nếu có đủ tài nguyên  
-✅ **Ensemble khả thi**: Khi 2 model đồng thuận → tin cậy cao
-
-### Per-Class Performance (CNN)
-
-| Class | Precision | Recall | F1-Score | Support |
-|-------|-----------|--------|----------|---------|
-| Bacterial Leaf Blight | 0.8750 | 0.8235 | 0.8485 | 102 |
-| Brown Spot | 0.9123 | 0.8976 | 0.9048 | 123 |
-| Healthy | 0.9567 | 0.9687 | 0.9627 | 95 |
-| Leaf Blast | 0.8234 | 0.8567 | 0.8398 | 115 |
-| Leaf Scald | 0.8456 | 0.8123 | 0.8286 | 89 |
-
-**Nhận xét**: Lớp "Healthy" dễ nhận diện nhất (F1 = 0.96). Các lớp bệnh khó phân biệt hơn do triệu chứng tương tự nhau.
-
----
-
-## 🛠️ Troubleshooting
-
-### Lỗi thường gặp
-
-#### 1. `CUDA out of memory`
-
-**Giải pháp**:
-- Giảm batch size trong config: `batch_size: 4` → `batch_size: 2`
-- Tăng accumulation steps để giữ effective batch size: `accumulation_steps: 8` → `accumulation_steps: 16`
-- Tắt AMP nếu cần: `amp: false`
-
-#### 2. `Model checkpoint not found`
-
-**Nguyên nhân**: Chưa train model hoặc đường dẫn sai
-
-**Giải pháp**:
+**Kiểm tra:**
 ```bash
-# Train CNN trước
+# Verify checkpoints tồn tại
+ls runs/cls_cnn_small/weights/
+ls runs/cls_vit_s_224/weights/
+
+# Nếu thiếu, cần train lại
 python src/train.py --task cls --config configs/cls_cnn_small.yaml
-
-# Hoặc chỉ định đường dẫn custom
-python -m src.tools.predict --image test.jpg --cnn_checkpoint path/to/model.pt
 ```
 
-#### 3. `Import error: No module named 'src'`
+### Import Error
 
-**Giải pháp**: Chạy từ thư mục gốc project với `-m` flag:
 ```bash
-# ✅ Đúng
+# Đảm bảo chạy từ project root
+cd rice_leaf_health_2
 python -m src.tools.predict --image test.jpg
-
-# ❌ Sai
-cd src/tools
-python predict.py  # Không hoạt động
-```
-
-#### 4. Training quá chậm
-
-**Giải pháp**:
-- Đảm bảo có GPU: `torch.cuda.is_available()` → `True`
-- Giảm số epochs
-- Sử dụng `num_workers: 2` hoặc `4` trong dataloader (nếu đủ RAM)
-- Bật TF32 và cudnn benchmark (đã mặc định)
-
-#### 5. Dữ liệu không load được
-
-**Kiểm tra**:
-```bash
-# Xem file split
-cat data/splits/train_cls.txt
-
-# Đảm bảo format: <path> <label>
-# Ví dụ: data/rice_cls/Healthy/img001.jpg 2
 ```
 
 ---
 
-## 📚 Tài liệu tham khảo
+## 📚 Tài Liệu Tham Khảo
 
 ### Papers
 
-1. **Vision Transformer (ViT)**  
-   Dosovitskiy et al. - "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale"  
-   [arXiv:2010.11929](https://arxiv.org/abs/2010.11929)
+1. **Vision Transformer**: Dosovitskiy et al., "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale," ICLR 2021
+2. **GradCAM**: Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization," ICCV 2017
+3. **Rice Disease Detection**: Sethy et al., "Deep feature based rice leaf disease identification using support vector machine," Computers and Electronics in Agriculture, 2020
 
-2. **GradCAM**  
-   Selvaraju et al. - "Grad-CAM: Visual Explanations from Deep Networks"  
-   [arXiv:1610.02391](https://arxiv.org/abs/1610.02391)
+### Datasets
 
-3. **Mixup & CutMix**  
-   Zhang et al. - "mixup: Beyond Empirical Risk Minimization"  
-   [arXiv:1710.09412](https://arxiv.org/abs/1710.09412)
+- [Kaggle Rice Leaf Diseases](https://www.kaggle.com/datasets/minhhuy2810/rice-diseases-image-dataset)
+- [Mendeley Rice Disease Dataset](https://data.mendeley.com/datasets/fwcj7stb8r/1)
 
-### Libraries & Tools
+### Tools & Libraries
 
-- **PyTorch**: [pytorch.org](https://pytorch.org/)
-- **timm (PyTorch Image Models)**: [github.com/huggingface/pytorch-image-models](https://github.com/huggingface/pytorch-image-models)
-- **torchvision**: [pytorch.org/vision](https://pytorch.org/vision/)
-
-### Related Projects
-
-- **Rice Disease Classification**: Nhiều nghiên cứu trên Kaggle và Papers with Code
-- **Plant Disease Detection**: Tương tự nhưng với nhiều loại cây trồng
+- [PyTorch](https://pytorch.org/) - Deep learning framework
+- [timm](https://github.com/huggingface/pytorch-image-models) - ViT pretrained models
+- [Gradio](https://www.gradio.app/) - Web interface
+- [Matplotlib](https://matplotlib.org/) - Visualization
 
 ---
 
-## 📝 License
-
-MIT License - Tự do sử dụng cho mục đích học tập và nghiên cứu.
-
+## 👥 Team
+- **Nguyễn Hoàng Thanh Tùng** - 22810310248
 ---
 
-## 👥 Contributors
+## 📄 License
 
-- **Nguyễn Hoàng Thanh Tùng - Theodore0502** - Initial work - [GitHub](https://github.com/yourusername)
+MIT License - xem file [LICENSE](LICENSE) để biết thêm chi tiết.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- Giảng viên môn Máy học nâng cao
-- PyTorch và timm community
-- Dataset contributors
+Cảm ơn thầy Trần Trung và các thầy cô khoa đã hỗ trợ trong quá trình thực hiện đề tài.
 
 ---
 
 <div align="center">
 
-**⭐ Nếu project hữu ích, hãy cho 1 star nhé! ⭐**
+**Made with ❤️ by Team Rice Leaf Health**
 
-**Cập nhật lần cuối:** 06/12/2025
+[⬆ Về đầu trang](#-hệ-thống-nhận-diện-bệnh-lúa---rice-leaf-disease-detection)
 
 </div>
