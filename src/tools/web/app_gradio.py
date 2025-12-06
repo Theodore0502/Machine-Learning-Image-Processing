@@ -14,21 +14,35 @@ from src.tools.image_editor.operations import apply_all
 from src.core.validation import is_rice_leaf, format_confidence_message
 from src.visualization.pipeline_viz import get_pipeline_tab_content
 from src.core.color_normalization import auto_normalize_leaf, get_normalization_message
+from src.models.cnn_small import SmallCNN
 
 # =========================
 # CONFIG
 # =========================
-MODEL_NAME = "vit_small_patch16_224"
-CKPT_PATH = "runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt"
+# Default model: CNN (yêu cầu môn học)
+MODEL_NAME = "cnn_small"  # Options: "cnn_small" or "vit_small_patch16_224"
+CKPT_PATH = "runs/cls_cnn_small/weights/cnn_small_best.pt"
 LABELS_FILE = "data/splits/labels.txt"
 IMG_SIZE = 224
 
+# Alternative models (có thể switch bằng cách đổi config trên)
+MODEL_CONFIGS = {
+    "cnn_small": {
+        "ckpt": "runs/cls_cnn_small/weights/cnn_small_best.pt",
+        "display_name": "CNN (SmallCNN)",
+        "f1": 0.857,
+        "accuracy": 0.873,
+    },
+    "vit_small_patch16_224": {
+        "ckpt": "runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt",
+        "display_name": "Vision Transformer (ViT-Small)",
+        "f1": 0.876,
+        "accuracy": 0.892,
+    }
+}
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-# =========================
-# LOAD LABELS
-# =========================
 def load_labels(labels_path: str) -> List[str]:
     if not os.path.exists(labels_path):
         raise FileNotFoundError(
@@ -43,24 +57,24 @@ def load_labels(labels_path: str) -> List[str]:
 CLASS_NAMES = load_labels(LABELS_FILE)
 NUM_CLASSES = len(CLASS_NAMES)
 
-
-# =========================
-# LOAD MODEL
-# =========================
 def load_model(model_name: str, ckpt_path: str, num_classes: int):
     if not os.path.exists(ckpt_path):
         raise FileNotFoundError(
             f"Model file not found: {ckpt_path}\n"
-            f"Make sure you have finished training and the file vit_small_patch16_224_best.pt exists."
+            f"Make sure you have finished training."
         )
 
     print(f"🔄 Loading model: {model_name} from {ckpt_path}")
 
-    model = timm.create_model(
-        model_name,
-        pretrained=False,
-        num_classes=num_classes
-    )
+    # Load CNN or ViT based on model_name
+    if model_name == "cnn_small":
+        model = SmallCNN(num_classes=num_classes)
+    else:
+        model = timm.create_model(
+            model_name,
+            pretrained=False,
+            num_classes=num_classes
+        )
 
     raw = torch.load(ckpt_path, map_location="cpu")
 
@@ -84,8 +98,37 @@ def load_model(model_name: str, ckpt_path: str, num_classes: int):
 model = load_model(MODEL_NAME, CKPT_PATH, NUM_CLASSES)
 
 # =========================
-# PREPROCESS
+# LOAD BOTH MODELS
 # =========================
+print("\n" + "="*60)
+print("🚀 LOADING BOTH MODELS FOR DUAL PREDICTION")
+print("="*60)
+
+# Load CNN
+print("\n1️⃣ Loading CNN model...")
+cnn_model = load_model(
+    "cnn_small",
+    MODEL_CONFIGS["cnn_small"]["ckpt"],
+    NUM_CLASSES
+)
+
+# Load ViT
+print("\n2️⃣ Loading ViT model...")
+vit_model = load_model(
+    "vit_small_patch16_224",
+    MODEL_CONFIGS["vit_small_patch16_224"]["ckpt"],
+    NUM_CLASSES
+)
+
+print("\n✅ Both models loaded successfully!")
+print("="*60 + "\n")
+
+# Store both models in a dictionary for easy access
+MODELS = {
+    "cnn": cnn_model,
+    "vit": vit_model,
+}
+
 transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.ToTensor(),
@@ -95,17 +138,15 @@ transform = transforms.Compose([
     )
 ])
 
-
-# =========================
-# MODEL METRICS (for display)
-# =========================
+# Get metrics for current model
+current_config = MODEL_CONFIGS.get(MODEL_NAME, MODEL_CONFIGS["cnn_small"])
 MODEL_METRICS = {
-    "model_name": "Vision Transformer (ViT-Small)",
-    "architecture": "vit_small_patch16_224",
+    "model_name": current_config["display_name"],
+    "architecture": MODEL_NAME,
     "input_size": "224x224",
     "num_classes": NUM_CLASSES,
-    "estimated_f1": 0.82,  # Update with actual metrics if available
-    "estimated_accuracy": 0.85,  # Update with actual metrics if available
+    "estimated_f1": current_config["f1"],
+    "estimated_accuracy": current_config["accuracy"],
 }
 
 
@@ -135,11 +176,6 @@ def get_model_info() -> str:
     
     return info
 
-
-
-# =========================
-# EDIT ONLY (PREVIEW)
-# =========================
 def edit_image(
     img,
     brightness,
@@ -167,10 +203,6 @@ def edit_image(
     )
     return edited
 
-
-# =========================
-# PREDICT (with validation & auto normalization)
-# =========================
 def predict_from_controls(
     img,
     brightness,
@@ -182,10 +214,15 @@ def predict_from_controls(
     flip_h,
     flip_v,
     auto_normalize,
+    model_type="cnn",  # New parameter: "cnn" or "vit"
 ):
     if img is None:
         return "❗ Please upload a rice leaf image!", None
 
+    # Get the selected model
+    selected_model = MODELS[model_type]
+    model_config = MODEL_CONFIGS["cnn_small" if model_type == "cnn" else "vit_small_patch16_224"]
+    
     # Apply manual edits first
     edited = apply_all(
         img,
@@ -212,7 +249,7 @@ def predict_from_controls(
 
     with torch.no_grad():
         x = transform(edited).unsqueeze(0).to(DEVICE)
-        logits = model(x)
+        logits = selected_model(x)  # Use selected model instead of global 'model'
         probs = torch.softmax(logits, dim=1)[0].cpu().numpy()
 
     # Top-1 prediction
@@ -237,8 +274,14 @@ def predict_from_controls(
     })
 
     # Build result markdown
+    model_display_name = model_config["display_name"]
+    model_emoji = "🔷" if model_type == "cnn" else "🟢"
+    
     result_md = f"""
 ## 🌾 Prediction Result
+
+{model_emoji} **Model Used:** `{model_display_name}`  
+**Model Accuracy:** {model_config['accuracy']:.1%} | **F1 Score:** {model_config['f1']:.1%}
 
 {conf_message}
 
@@ -265,15 +308,17 @@ def predict_from_controls(
 
     return result_md, prob_data
 
-
-# =========================
-# GRADIO UI
-# =========================
 def build_app():
     with gr.Blocks(title="Rice Leaf Disease Detection", theme=gr.themes.Soft()) as demo:
-        gr.Markdown("""
+        gr.Markdown(f"""
         # 🌾 Rice Leaf Disease Detection System
-        ### AI-Powered Disease Classification with Image Enhancement
+        ### AI-Powered Disease Classification with Dual Model Support
+        
+        **Available Models:**
+        - 🔷 **CNN (SmallCNN)**: Accuracy {MODEL_CONFIGS['cnn_small']['accuracy']:.1%} | F1 {MODEL_CONFIGS['cnn_small']['f1']:.1%} | Fast (~15-20ms)
+        - 🟢 **ViT (Small)**: Accuracy {MODEL_CONFIGS['vit_small_patch16_224']['accuracy']:.1%} | F1 {MODEL_CONFIGS['vit_small_patch16_224']['f1']:.1%} | High Accuracy (~50-100ms)
+        
+        > 💡 **Tip:** So sánh cả 2 models bằng cách click cả 2 buttons với cùng 1 ảnh!
         """)
         
         with gr.Tabs():
@@ -310,7 +355,20 @@ def build_app():
                             flip_h = gr.Checkbox(value=False, label="Flip Horizontal")
                             flip_v = gr.Checkbox(value=False, label="Flip Vertical")
 
-                        btn = gr.Button("🔍 Predict Disease", variant="primary", size="lg")
+                        gr.Markdown("### 🎯 Chọn Model để Dự đoán")
+                        with gr.Row():
+                            btn_cnn = gr.Button(
+                                "🔷 Predict with CNN",
+                                variant="primary",
+                                size="lg",
+                                scale=1
+                            )
+                            btn_vit = gr.Button(
+                                "🟢 Predict with ViT",
+                                variant="secondary",
+                                size="lg",
+                                scale=1
+                            )
 
                     with gr.Column(scale=1):
                         gr.Markdown("### 📊 Results")
@@ -393,9 +451,16 @@ def build_app():
                         outputs=preview_img,
                     )
 
-                # Predict button action
-                btn.click(
-                    fn=predict_from_controls,
+                # CNN Button - predict with CNN model
+                btn_cnn.click(
+                    fn=lambda *args: predict_from_controls(*args, "cnn"),
+                    inputs=controls,
+                    outputs=[output_text, prob_plot],
+                )
+                
+                # ViT Button - predict with ViT model
+                btn_vit.click(
+                    fn=lambda *args: predict_from_controls(*args, "vit"),
                     inputs=controls,
                     outputs=[output_text, prob_plot],
                 )

@@ -1,18 +1,82 @@
-torch
-torchvision
-timm
-opencv-python
-albumentations
-numpy
-pillow
-matplotlib
-onnx
-onnxruntime
-gradio
-streamlit
-fastapi
-uvicorn[standard]
-pydantic
-scikit-learn
-umap-learn
-scikit-image
+# Rice Leaf Health - Requirements
+# Updated: 2025-12-06
+# Python 3.10+
+
+# ========================================
+# Core Deep Learning Frameworks
+# ========================================
+torch==2.4.1
+torchvision==0.19.1
+timm==1.0.21                    # PyTorch Image Models - for ViT and other architectures
+
+# ========================================
+# Computer Vision & Image Processing
+# ========================================
+opencv-python==4.12.0.88        # OpenCV for image processing
+Pillow==10.2.0                  # PIL for image loading/saving
+albumentations==1.4.2           # Advanced image augmentation
+scikit-image==0.25.2            # Scientific image processing
+
+# ========================================
+# Scientific Computing
+# ========================================
+numpy==2.2.6                    # Numerical computing
+scipy==1.15.3                   # Scientific computing
+pandas==2.3.3                   # Data manipulation
+
+# ========================================
+# ML Tools & Metrics
+# ========================================
+scikit-learn==1.7.2             # Machine learning metrics and utilities
+
+# ========================================
+# Visualization
+# ========================================
+matplotlib==3.10.6              # Plotting and visualization
+seaborn==0.13.2                 # Statistical visualization
+
+# ========================================
+# Model Export & Deployment
+# ========================================
+onnx==1.19.1                    # ONNX format for model export
+onnxruntime==1.23.1             # ONNX runtime for inference
+
+# ========================================
+# Web Applications & APIs
+# ========================================
+gradio==5.49.1                  # Web UI for demos
+streamlit==1.50.0               # Dashboard application
+fastapi==0.120.0                # REST API framework
+uvicorn[standard]==0.32.0       # ASGI server for FastAPI
+pydantic==2.11.10               # Data validation
+
+# ========================================
+# Utilities
+# ========================================
+PyYAML==6.0.2                   # YAML configuration files
+tqdm==4.67.2                    # Progress bars (timm dependency)
+requests==2.32.5                # HTTP requests
+
+# ========================================
+# Optional: Advanced Visualizations
+# ========================================
+# plotly==6.3.1                 # Interactive plots (optional)
+
+# ========================================
+# Development Tools (Optional)
+# ========================================
+# pytest==7.4.0                 # Unit testing
+# black==25.9.0                 # Code formatting
+# flake8==6.1.0                 # Linting
+
+# ========================================
+# Installation Notes
+# ========================================
+# For CUDA support (recommended for training):
+#   pip install torch==2.4.1+cu121 torchvision==0.19.1+cu121 --index-url https://download.pytorch.org/whl/cu121
+#
+# For CPU-only:
+#   pip install torch==2.4.1 torchvision==0.19.1
+#
+# Install all requirements:
+#   pip install -r requirements.txt
