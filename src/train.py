@@ -160,12 +160,14 @@ def train_cls(cfg):
         model = timm.create_model(model_name, pretrained=True, num_classes=num_classes)
     model.to(device)
     if use_mix:
-        criterion = SoftTargetCrossEntropy()
+        criterion_train = SoftTargetCrossEntropy()
+        criterion_val = nn.CrossEntropyLoss()  # Validation luôn dùng hard labels
         mixup_fn = Mixup(mixup_alpha=mixup_alpha, cutmix_alpha=cutmix_alpha,
                          prob=1.0, switch_prob=0.5, mode='batch',
                          label_smoothing=0.0, num_classes=num_classes)
     else:
-        criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+        criterion_train = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+        criterion_val = criterion_train
         mixup_fn = None
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
@@ -174,10 +176,10 @@ def train_cls(cfg):
     es_counter = 0
     for ep in range(1, epochs + 1):
         tr_loss, tr_acc, tr_f1 = train_one_epoch(
-            model, train_loader, optimizer, criterion, device, num_classes,
+            model, train_loader, optimizer, criterion_train, device, num_classes,
             scaler, use_amp, accumulation_steps, mixup_fn
         )
-        va_loss, va_acc, va_f1 = evaluate(model, val_loader, criterion, device, num_classes)
+        va_loss, va_acc, va_f1 = evaluate(model, val_loader, criterion_val, device, num_classes)
         scheduler.step()
         print(f"[ep {ep:02d}] train loss {tr_loss:.4f} acc {tr_acc:.2f}% f1 {tr_f1:.3f} | "
               f"val loss {va_loss:.4f} acc {va_acc:.2f}% f1 {va_f1:.3f} | lr {scheduler.get_last_lr()[0]:.6f}")

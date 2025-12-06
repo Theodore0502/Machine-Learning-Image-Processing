@@ -90,13 +90,37 @@ def load_model(ckpt, model_name, num_classes, device):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ckpt", required=True)
-    ap.add_argument("--model_name", required=True)
+    # Simplified interface with model_type
+    ap.add_argument("--model_type", type=str, choices=["cnn", "vit"],
+                   help="Model type: cnn or vit (auto-detects checkpoint)")
+    # Original explicit parameters (for backward compatibility)
+    ap.add_argument("--ckpt")
+    ap.add_argument("--model_name")
     ap.add_argument("--img_size", type=int, default=224)
-    ap.add_argument("--split_file", required=True)
-    ap.add_argument("--labels_file", required=True)
+    ap.add_argument("--split_file", default="data/splits/test_cls.txt")
+    ap.add_argument("--labels_file", default="data/splits/labels.txt")
     ap.add_argument("--out_csv", default="eval_preds.csv")
     args = ap.parse_args()
+
+    # Auto-detect checkpoint and model_name from model_type
+    if args.model_type:
+        configs = {
+            "cnn": {
+                "ckpt": "runs/cls_cnn_small/weights/cnn_small_best.pt",
+                "model_name": "cnn_small"
+            },
+            "vit": {
+                "ckpt": "runs/cls_vit_s_224/weights/vit_small_patch16_224_best.pt",
+                "model_name": "vit_small_patch16_224"
+            }
+        }
+        cfg = configs[args.model_type]
+        args.ckpt = args.ckpt or cfg["ckpt"]
+        args.model_name = args.model_name or cfg["model_name"]
+    
+    # Validate required parameters
+    if not args.ckpt or not args.model_name:
+        ap.error("Either provide --model_type OR both --ckpt and --model_name")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     class_names = load_class_map(args.labels_file)
