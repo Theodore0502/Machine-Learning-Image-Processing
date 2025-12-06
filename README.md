@@ -674,7 +674,7 @@ MIT License - Tự do sử dụng cho mục đích học tập và nghiên cứu
 
 ## 👥 Contributors
 
-- **Your Name** - Initial work - [GitHub](https://github.com/yourusername)
+- **Nguyễn Hoàng Thanh Tùng - Theodore0502** - Initial work - [GitHub](https://github.com/yourusername)
 
 ---
 
