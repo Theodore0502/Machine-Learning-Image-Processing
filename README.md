@@ -489,6 +489,31 @@ python -m src.tools.gradcam \
 
 **Giải thích**: GradCAM hiển thị các vùng ảnh mà model tập trung vào khi đưa ra dự đoán. Màu đỏ = quan trọng nhất.
 
+### Model Comparison Visualization (NEW! 🎨)
+
+So sánh trực quan CNN vs ViT với biểu đồ đầy đủ:
+
+```bash
+# Tạo visualization so sánh và hiể thị
+python -m src.visualization.model_comparison --image temp/test1.jpg
+
+# Lưu vào file thay vì hiển thị
+python -m src.visualization.model_comparison \
+  --image temp/test1.jpg \
+  --save outputs/cnn_vs_vit_comparison.png
+```
+
+**Nội dung visualization** (6 subplots):
+1. **Ảnh gốc**: Hiển thị ảnh input
+2. **Dự đoán CNN**: Kết quả + độ tin cậy + thời gian
+3. **Dự đoán ViT**: Kết quả + độ tin cậy + thời gian
+4. **Top-5 So sánh**: Bar chart so sánh xác suất top-5 predictions
+5. **Tất cả các lớp**: Horizontal bar chart so sánh toàn bộ classes
+6. **Tốc độ Inference**: So sánh thời gian dự đoán
+7. **Phân tích Đồng thuận**: Đánh giá agreement/disagreement + khuyến nghị
+
+**Output**: File PNG với resolution cao (150 DPI), phù hợp để đưa vào báo cáo.
+
 ### Attention Maps (ViT only)
 
 ViT model tự động có attention maps qua self-attention layers, cho phép visualize model "nhìn" vào đâu.
