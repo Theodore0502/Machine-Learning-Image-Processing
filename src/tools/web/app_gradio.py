@@ -186,10 +186,12 @@ def edit_image(
     angle,
     flip_h,
     flip_v,
+    auto_normalize,
 ):
     if img is None:
         return None
 
+    # Apply manual edits first
     edited = apply_all(
         img,
         brightness=brightness,
@@ -201,6 +203,16 @@ def edit_image(
         flip_h=flip_h,
         flip_v=flip_v,
     )
+    
+    # Apply auto color normalization if enabled
+    if auto_normalize:
+        edited, _ = auto_normalize_leaf(
+            edited,
+            apply_hue_correction=True,
+            apply_saturation_correction=True,
+            apply_brightness_correction=True
+        )
+    
     return edited
 
 def predict_from_controls(
@@ -280,31 +292,11 @@ def predict_from_controls(
     result_md = f"""
 ## 🌾 Prediction Result
 
-{model_emoji} **Model Used:** `{model_display_name}`  
-**Model Accuracy:** {model_config['accuracy']:.1%} | **F1 Score:** {model_config['f1']:.1%}
-
-{conf_message}
-
----
+{model_emoji} **Model Used:** `{model_display_name}`
 
 ### Predicted Disease: `{pred_label}`
 **Confidence:** {conf*100:.2f}%
-
-{validation_msg}
-
----
 """
-    
-    # Add normalization info if applied
-    if auto_normalize and norm_message:
-        result_md += f"\n{norm_message}\n\n---\n"
-    
-    result_md += "\n### All Class Probabilities:\n"
-    
-    for i in top_indices:
-        bar_length = int(probs[i] * 30)  # Scale for visual bar
-        bar = "█" * bar_length + "░" * (30 - bar_length)
-        result_md += f"\n- **{CLASS_NAMES[i]}**: {bar} {probs[i]*100:.2f}%"
 
     return result_md, prob_data
 
@@ -341,12 +333,6 @@ def build_app():
                                                    label="Brightness")
                             contrast = gr.Slider(0.5, 1.5, value=1.0, step=0.05,
                                                  label="Contrast")
-                            hue_shift = gr.Slider(-180, 180, value=0, step=10,
-                                                  label="Hue")
-                            sat_scale = gr.Slider(0.0, 3.0, value=1.0, step=0.1,
-                                                  label="Saturation")
-                            val_scale = gr.Slider(0.0, 3.0, value=1.0, step=0.1,
-                                                  label="Value")
                             angle = gr.Dropdown(
                                 choices=[0, 90, 180, 270],
                                 value=0,
@@ -422,14 +408,11 @@ def build_app():
                 + "\n".join([f"- {cls}" for cls in CLASS_NAMES])
                 )
 
-                # Input controls list
+                # Input controls list (HSV removed from UI)
                 controls = [
                     img_input,
                     brightness,
                     contrast,
-                    hue_shift,
-                    sat_scale,
-                    val_scale,
                     angle,
                     flip_h,
                     flip_v,
@@ -446,21 +429,21 @@ def build_app():
                 # Update preview on any control change
                 for c in controls:
                     c.change(
-                        fn=edit_image,
+                        fn=lambda img, b, c, a, fh, fv, an: edit_image(img, b, c, 0, 1.0, 1.0, a, fh, fv, an),
                         inputs=controls,
                         outputs=preview_img,
                     )
 
                 # CNN Button - predict with CNN model
                 btn_cnn.click(
-                    fn=lambda *args: predict_from_controls(*args, "cnn"),
+                    fn=lambda img, b, c, a, fh, fv, an: predict_from_controls(img, b, c, 0, 1.0, 1.0, a, fh, fv, an, "cnn"),
                     inputs=controls,
                     outputs=[output_text, prob_plot],
                 )
                 
                 # ViT Button - predict with ViT model
                 btn_vit.click(
-                    fn=lambda *args: predict_from_controls(*args, "vit"),
+                    fn=lambda img, b, c, a, fh, fv, an: predict_from_controls(img, b, c, 0, 1.0, 1.0, a, fh, fv, an, "vit"),
                     inputs=controls,
                     outputs=[output_text, prob_plot],
                 )

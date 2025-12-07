@@ -10,13 +10,14 @@
 
 [Tính năng](#-tính-năng-chính) • [Cài đặt](#-cài-đặt-nhanh) • [Sử dụng](#-sử-dụng) • [Kết quả](#-kết-quả)
 
+python -m src.tools.web.app_gradio
 </div>
 
 ---
 
 ## 📖 Tổng Quan Dự Án
 
-Dự án **Rice Leaf Disease Detection** là hệ thống nhận diện bệnh lúa tự động sử dụng học sâu, được phát triển cho môn **Học Máy Nâng Cao** - Đại học Điện Lực.
+Dự án **Rice Leaf Disease Detection** là hệ thống nhận diện bệnh lúa tự động sử dụng học sâu, được phát triển cho môn **Học Máy Nâng Cao**
 
 ### 🎯 Mục Tiêu
 
